@@ -37,13 +37,15 @@ import android.nfc.tech.Ndef;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.Loader;
+
 import android.os.StrictMode;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.Loader;
 import android.text.TextUtils;
 import android.util.Base64;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -54,14 +56,14 @@ import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.Toast;
 
-import com.example.android.common.logger.Log;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -107,7 +109,7 @@ public class NfcProvisioningFragment extends Fragment implements
     private EditText mEditSite;
     private EditText mEditNfcId;
     private EditText mEditApkName;
-    private Switch  mSwitch;
+    private Switch mSwitch;
     private Switch  mUseOnly;
     private CheckBox mchkHide;
 
@@ -499,6 +501,7 @@ public class NfcProvisioningFragment extends Fragment implements
         mEditCompany.addTextChangedListener(new TextWatcherWrapper(R.id.company, this));
         mEditSite.addTextChangedListener(new TextWatcherWrapper(R.id.site, this));
         mEditNfcId.addTextChangedListener(new TextWatcherWrapper(R.id.nfcid, this));
+        mEditNfcId.setEnabled(false);
         mEditApkName.addTextChangedListener(new TextWatcherWrapper(R.id.apkname, this));
 
         Button button = (Button) view.findViewById(R.id.download);
@@ -564,6 +567,10 @@ public class NfcProvisioningFragment extends Fragment implements
     private void gatherAdminExtras(String scompany, String sSite, String nfcid) {
        if(mProvisioningValues==null) return ;
         try{
+            if (TextUtils.isEmpty(nfcid)){
+
+            }
+
             String s=String.format("sid=%s\ncid=%s\nnfid=%s\n", sSite, scompany, nfcid);
             mProvisioningValues.put(
                     DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE, s);
@@ -719,6 +726,11 @@ public class NfcProvisioningFragment extends Fragment implements
      ******************************************************************************/
     private void write(Tag tag) throws IOException, FormatException {
         // Get an instance of Ndef for the tag.
+        if (TextUtils.isEmpty(mCompany) || TextUtils.isEmpty(mSite) || TextUtils.isEmpty(mNFCId)){
+            Toast.makeText(getActivity(), "CompanyID, SiteID, NFC ID can not be empty", Toast.LENGTH_LONG).show();
+            return ;
+        }
+
         Ndef ndef = Ndef.get(tag);
         NdefMessage ndfmsg = createRecord();
         new AsyncConnectWrite().execute(ndfmsg, ndef);
@@ -967,6 +979,20 @@ public class NfcProvisioningFragment extends Fragment implements
                 break;
             case R.id.apkname:
                 SetConfig(getActivity(), "apkname", s);
+                /*if (TextUtils.isEmpty(mNFCId))*/{
+                    try {
+                        Uri uri = Uri.parse(s);
+                        List<String> paths = uri.getPathSegments();
+                        if(paths.size()==3){
+                            mNFCId = paths.get(1);
+                            mEditNfcId.setText(mNFCId);
+                            gatherAdminExtras(mCompany, mSite, mNFCId);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                }
                 break;
         }
     }

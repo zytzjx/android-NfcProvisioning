@@ -23,22 +23,17 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Environment;
-import android.os.PersistableBundle;
-import android.support.v4.content.AsyncTaskLoader;
-
-import com.example.android.common.logger.Log;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TimeZone;
+
+import androidx.loader.content.AsyncTaskLoader;
+
 
 /**
  * Loads default values for NFC provisioning.
@@ -49,7 +44,7 @@ import java.util.TimeZone;
 public class ProvisioningValuesLoader extends AsyncTaskLoader<Map<String, String>> {
 
     private static final String FILENAME = "nfcprovisioning.txt";
-    private static final String TAG = "LoadProvisioningValuesTask";
+    private static final String TAG = "LoadProvisioningTask";
 
     private Map<String, String> mValues;
     Context mcontext;
@@ -130,33 +125,6 @@ public class ProvisioningValuesLoader extends AsyncTaskLoader<Map<String, String
                 values.put(key, value);
                 Log.d(TAG, key + "=" + value);
             }
-        }
-    }
-
-    private void gatherAdminExtras(HashMap<String, String> values) {
-        Properties props = new Properties();
-        props.clear();
-        props.put("sid","11");
-        props.put("cid","12");
-
-//        Set<String> keys = new HashSet<>(values.keySet());
-//        for (String key : keys) {
-//            if (key.startsWith("android.app.extra")) {
-//                continue;
-//            }
-//            props.put(key, values.get(key));
-//            values.remove(key);
-//        }
-        StringWriter sw = new StringWriter();
-        try{
-            props.store(sw,null);
-            Log.d("FDIAL", sw.toString());
-            values.put(DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE,
-                    "sid=11\ncid=12\n");
-            Log.d(TAG, "Admin extras bundle=" + values.get(
-                    DevicePolicyManager.EXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE));
-        } catch (IOException e) {
-            Log.e(TAG, "Unable to build admin extras bundle");
         }
     }
 
